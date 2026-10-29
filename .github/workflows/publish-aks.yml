@@ -99,6 +99,19 @@ jobs:
         run: |
           set -euo pipefail
           sudo az aks install-cli
+          ACR_ID="$(az acr show -n "$ACR_NAME" -g rg-brokenbank-demo --query id -o tsv)"
+          KUBELET_ID="$(az aks show -g rg-brokenbank-demo -n juice-shop --query identityProfile.kubeletidentity.objectId -o tsv)"
+          existing="$(az role assignment list --scope "$ACR_ID" --assignee-object-id "$KUBELET_ID" --role AcrPull --query "[0].id" -o tsv)"
+          if [[ -z "$existing" ]]; then
+            echo "[juice] Granting AcrPull on ${ACR_NAME} to the cluster kubelet"
+            az role assignment create \
+              --role AcrPull \
+              --scope "$ACR_ID" \
+              --assignee-object-id "$KUBELET_ID" \
+              --assignee-principal-type ServicePrincipal \
+              --output none
+            sleep 45
+          fi
           az aks get-credentials --resource-group rg-brokenbank-demo --name juice-shop --overwrite-existing
           rendered="${RUNNER_TEMP}/juice-shop.yaml"
           sed -e "s|\${acr_login_server}|${ACR_LOGIN}|g" -e "s|\${image_tag}|${GITHUB_SHA}|g" k8s/juice-shop.yaml > "$rendered"
