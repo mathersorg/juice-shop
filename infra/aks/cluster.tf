@@ -25,6 +25,8 @@ resource "azurerm_kubernetes_cluster" "juice" {
 
   tags = {
     application = "juice-shop"
+    yor_name    = "juice"
+    yor_trace   = "961bcfca-675b-430e-b43a-b02380ebbcb0"
   }
 
   auto_scaler_profile {
