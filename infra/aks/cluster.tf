@@ -24,9 +24,16 @@ resource "azurerm_kubernetes_cluster" "juice" {
   workload_identity_enabled           = true
 
   tags = {
-    application = "juice-shop"
-    yor_name    = "juice"
-    yor_trace   = "961bcfca-675b-430e-b43a-b02380ebbcb0"
+    application          = "juice-shop"
+    yor_name             = "juice"
+    yor_trace            = "961bcfca-675b-430e-b43a-b02380ebbcb0"
+    git_commit           = "4261c75a3e6728f20bf13df05c9b89a4fc537988"
+    git_file             = "infra/aks/cluster.tf"
+    git_last_modified_at = "2026-10-29 19:48:04"
+    git_last_modified_by = "smathers@digitalgatekeepers.com"
+    git_modifiers        = "smathers"
+    git_org              = "mathersorg"
+    git_repo             = "juice-shop"
   }
 
   auto_scaler_profile {

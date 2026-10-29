@@ -32,6 +32,8 @@ resource "azurerm_private_dns_zone" "acr" {
 
   tags = {
     application = "juice-shop"
+    yor_name    = "acr"
+    yor_trace   = "5d47dd58-305e-4794-9698-46730c3671d7"
   }
 }
 
@@ -41,6 +43,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "lab" {
   private_dns_zone_name = azurerm_private_dns_zone.acr.name
   virtual_network_id    = data.azurerm_virtual_network.lab.id
   registration_enabled  = false
+  tags = {
+    yor_name  = "lab"
+    yor_trace = "619952c4-12e1-4a4b-b859-0f9b3f892dbf"
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "aks" {
@@ -49,6 +55,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "aks" {
   private_dns_zone_name = azurerm_private_dns_zone.acr.name
   virtual_network_id    = data.azurerm_virtual_network.aks.id
   registration_enabled  = false
+  tags = {
+    yor_name  = "aks"
+    yor_trace = "819e7707-19d7-4f28-aff2-3369bf281eb4"
+  }
 }
 
 resource "azurerm_private_endpoint" "acr" {
@@ -71,6 +81,8 @@ resource "azurerm_private_endpoint" "acr" {
 
   tags = {
     application = "juice-shop"
+    yor_name    = "acr"
+    yor_trace   = "d754000b-170a-4ff6-a831-9fa65f094f5c"
   }
 }
 
