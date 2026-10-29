@@ -100,9 +100,13 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
+          if [[ ! -f infra/aks/backend.hcl ]]; then
+            echo "[storage] no backend.hcl"
+            exit 0
+          fi
           SA="$(awk -F'"' '/storage_account_name/{print $2; exit}' infra/aks/backend.hcl)"
           if [[ -z "$SA" ]]; then
-            echo "[storage] no backend.hcl"
+            echo "[storage] no storage account in backend.hcl"
             exit 0
           fi
           az storage account update \
