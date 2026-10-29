@@ -85,6 +85,24 @@ jobs:
           terraform apply -input=false tfplan
           echo "generated=false" >> "$GITHUB_OUTPUT"
 
+      - name: Roll Juice Shop onto the private endpoint
+        if: steps.tf.outputs.generated == 'false'
+        run: |
+          set -euo pipefail
+          sudo az aks install-cli
+          az aks get-credentials --resource-group rg-brokenbank-demo --name juice-shop --overwrite-existing
+          if ! kubectl -n juiceshop get deployment juice-shop >/dev/null 2>&1; then
+            echo "[juice] deployment not created yet"
+            exit 0
+          fi
+          kubectl -n juiceshop rollout restart deployment/juice-shop
+          if ! kubectl -n juiceshop rollout status deployment/juice-shop --timeout=600s; then
+            kubectl -n juiceshop describe pods -l app=juice-shop || true
+            kubectl -n juiceshop get events --sort-by=.lastTimestamp || true
+            exit 1
+          fi
+          kubectl -n juiceshop get svc juice-shop -o wide
+
       - name: Upload generated cluster config
         if: steps.tf.outputs.generated == 'true'
         uses: actions/upload-artifact@v4

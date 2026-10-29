@@ -1,0 +1,93 @@
+# Private path from the juice-shop nodes to badbankrehzuh.
+# Public network access stays enabled so the GitHub runner can still push
+# and the lab VM can still pull over its subnet rule.
+
+data "azurerm_virtual_network" "lab" {
+  name                = "badbank-vnet"
+  resource_group_name = "rg-brokenbank-demo"
+}
+
+data "azurerm_resources" "aks_vnet" {
+  resource_group_name = "MC_rg-brokenbank-demo_juice-shop_eastus"
+  type                = "Microsoft.Network/virtualNetworks"
+}
+
+data "azurerm_virtual_network" "aks" {
+  name                = data.azurerm_resources.aks_vnet.resources[0].name
+  resource_group_name = "MC_rg-brokenbank-demo_juice-shop_eastus"
+}
+
+resource "azurerm_subnet" "acr_pe" {
+  name                 = "badbank-acr-pe"
+  resource_group_name  = "rg-brokenbank-demo"
+  virtual_network_name = data.azurerm_virtual_network.lab.name
+  address_prefixes     = ["10.40.2.0/24"]
+
+  private_endpoint_network_policies = "Disabled"
+}
+
+resource "azurerm_private_dns_zone" "acr" {
+  name                = "privatelink.azurecr.io"
+  resource_group_name = "rg-brokenbank-demo"
+
+  tags = {
+    application = "juice-shop"
+  }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "lab" {
+  name                  = "badbank-vnet"
+  resource_group_name   = "rg-brokenbank-demo"
+  private_dns_zone_name = azurerm_private_dns_zone.acr.name
+  virtual_network_id    = data.azurerm_virtual_network.lab.id
+  registration_enabled  = false
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "aks" {
+  name                  = "juice-shop-vnet"
+  resource_group_name   = "rg-brokenbank-demo"
+  private_dns_zone_name = azurerm_private_dns_zone.acr.name
+  virtual_network_id    = data.azurerm_virtual_network.aks.id
+  registration_enabled  = false
+}
+
+resource "azurerm_private_endpoint" "acr" {
+  name                = "badbankrehzuh-pe"
+  location            = "eastus"
+  resource_group_name = "rg-brokenbank-demo"
+  subnet_id           = azurerm_subnet.acr_pe.id
+
+  private_service_connection {
+    name                           = "badbankrehzuh"
+    private_connection_resource_id = "/subscriptions/2fd9cc2a-5fbe-4f3a-97e9-cf0e2f000300/resourceGroups/rg-brokenbank-demo/providers/Microsoft.ContainerRegistry/registries/badbankrehzuh"
+    subresource_names              = ["registry"]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = "acr"
+    private_dns_zone_ids = [azurerm_private_dns_zone.acr.id]
+  }
+
+  tags = {
+    application = "juice-shop"
+  }
+}
+
+resource "azurerm_virtual_network_peering" "lab_to_aks" {
+  name                         = "lab-to-juice-shop"
+  resource_group_name          = "rg-brokenbank-demo"
+  virtual_network_name         = data.azurerm_virtual_network.lab.name
+  remote_virtual_network_id    = data.azurerm_virtual_network.aks.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+}
+
+resource "azurerm_virtual_network_peering" "aks_to_lab" {
+  name                         = "juice-shop-to-lab"
+  resource_group_name          = "MC_rg-brokenbank-demo_juice-shop_eastus"
+  virtual_network_name         = data.azurerm_virtual_network.aks.name
+  remote_virtual_network_id    = data.azurerm_virtual_network.lab.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+}
