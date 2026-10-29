@@ -1,0 +1,30 @@
+name: Yor tag and trace
+
+"on":
+  push:
+    branches: [master]
+    paths:
+      - "infra/**/*.tf"
+      - ".github/workflows/yor.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  yor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run Yor
+        uses: bridgecrewio/yor-action@main
+        with:
+          directory: infra
+          parsers: Terraform
+          tag_groups: git,code2cloud
+          commit_changes: true
+          version: latest

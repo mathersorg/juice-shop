@@ -1,0 +1,120 @@
+name: Terraform AKS
+
+"on":
+  push:
+    branches: [master]
+    paths:
+      - "infra/**"
+      - ".github/workflows/terraform-aks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_RESOURCE_GROUP: rg-brokenbank-demo
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Allow runner on Terraform state
+        id: state
+        run: |
+          set -euo pipefail
+          chmod +x infra/aks/scripts/*.sh
+          ./infra/aks/scripts/ensure-juice-tfstate.sh
+
+      - name: Terraform Init
+        working-directory: infra/aks
+        run: terraform init -input=false -reconfigure -backend-config=backend.hcl
+
+      - name: Read the live cluster
+        run: |
+          set -euo pipefail
+          az aks show -g rg-brokenbank-demo -n juice-shop -o json > "${RUNNER_TEMP}/aks.json"
+          az aks nodepool list -g rg-brokenbank-demo --cluster-name juice-shop -o json > "${RUNNER_TEMP}/pools.json"
+
+      - name: Generate config or apply tags
+        id: tf
+        working-directory: infra/aks
+        run: |
+          set -euo pipefail
+          if [[ ! -f cluster.tf ]] || ! grep -q 'resource "azurerm_kubernetes_cluster"' cluster.tf; then
+            terraform plan -input=false -generate-config-out="${RUNNER_TEMP}/generated.tf" || true
+            if [[ ! -s "${RUNNER_TEMP}/generated.tf" ]]; then
+              echo "error: terraform did not write a generated cluster config" >&2
+              exit 1
+            fi
+            echo "generated=true" >> "$GITHUB_OUTPUT"
+            echo "Generated cluster config. Apply waits until cluster.tf is committed."
+            exit 0
+          fi
+          terraform plan -input=false -out=tfplan
+          terraform show -json tfplan > "${RUNNER_TEMP}/plan.json"
+          if jq -e '
+            [.resource_changes[]?
+              | select(.change.actions | index("delete"))] | length > 0
+          ' "${RUNNER_TEMP}/plan.json" >/dev/null; then
+            echo "error: plan would delete or replace the cluster" >&2
+            terraform show tfplan
+            exit 1
+          fi
+          terraform apply -input=false tfplan
+          echo "generated=false" >> "$GITHUB_OUTPUT"
+
+      - name: Upload generated cluster config
+        if: steps.tf.outputs.generated == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aks-generated
+          path: |
+            ${{ runner.temp }}/generated.tf
+            ${{ runner.temp }}/aks.json
+            ${{ runner.temp }}/pools.json
+          retention-days: 7
+
+      - name: Relock storage firewall
+        if: always()
+        run: |
+          set -euo pipefail
+          SA="$(awk -F'"' '/storage_account_name/{print $2; exit}' infra/aks/backend.hcl)"
+          if [[ -z "$SA" ]]; then
+            echo "[storage] no backend.hcl"
+            exit 0
+          fi
+          az storage account update \
+            --resource-group rg-brokenbank-demo \
+            --name "$SA" \
+            --default-action Deny \
+            --output none
+          RUNNER_IP="$(curl -4 -fsS --max-time 10 https://api.ipify.org | tr -d '[:space:]' || true)"
+          if [[ -n "$RUNNER_IP" ]]; then
+            az storage account network-rule remove \
+              --resource-group rg-brokenbank-demo \
+              --account-name "$SA" \
+              --ip-address "$RUNNER_IP" \
+              --output none || true
+          fi

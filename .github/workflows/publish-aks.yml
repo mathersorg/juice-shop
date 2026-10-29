@@ -1,0 +1,125 @@
+name: Publish Juice Shop to ACR and AKS
+
+"on":
+  push:
+    branches: [master]
+    paths-ignore:
+      - "infra/**"
+      - ".github/workflows/terraform-aks.yml"
+      - ".github/workflows/yor.yml"
+      - "*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ACR_NAME: badbankrehzuh
+  ACR_LOGIN: badbankrehzuh.azurecr.io
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Allow GitHub runner on ACR
+        id: acrnet
+        run: |
+          set -euo pipefail
+          chmod +x infra/aks/scripts/allow-acr-ip.sh infra/aks/scripts/relock-acr-firewall.sh
+          RUNNER_IP="$(curl -4 -fsS --max-time 10 https://api.ipify.org | tr -d '[:space:]')"
+          echo "runner_ip=${RUNNER_IP}" >> "$GITHUB_OUTPUT"
+          ./infra/aks/scripts/allow-acr-ip.sh "$ACR_NAME" "$RUNNER_IP"
+
+      - name: Build and push Juice Shop
+        id: push
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_SHA}"
+          DEST="${ACR_LOGIN}/juice-shop:${TAG}"
+          logged_in=0
+          for i in $(seq 1 6); do
+            if TOKEN="$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)" \
+              && printf '%s' "$TOKEN" | docker login "$ACR_LOGIN" --username 00000000-0000-0000-0000-000000000000 --password-stdin; then
+              unset TOKEN
+              logged_in=1
+              break
+            fi
+            unset TOKEN
+            echo "[juice] ACR login denied (attempt ${i}/6); waiting 20s"
+            sleep 20
+          done
+          if [[ "$logged_in" != "1" ]]; then
+            echo "error: docker login to ${ACR_LOGIN} failed" >&2
+            exit 1
+          fi
+          echo "[juice] docker build ${DEST}"
+          docker build \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --build-arg "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --label "org.opencontainers.image.source=https://github.com/mathersorg/juice-shop" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            -t "$DEST" \
+            .
+          echo "[juice] docker push ${DEST}"
+          docker push "$DEST"
+          source_label="$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.source" }}' "$DEST")"
+          revision_label="$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$DEST")"
+          echo "source=${source_label}"
+          echo "revision=${revision_label}"
+          if [[ "$source_label" != "https://github.com/mathersorg/juice-shop" ]]; then
+            echo "error: image source label is ${source_label}" >&2
+            exit 1
+          fi
+          if [[ "$revision_label" != "$GITHUB_SHA" ]]; then
+            echo "error: image revision label is ${revision_label}" >&2
+            exit 1
+          fi
+
+      - name: Deploy Juice Shop to AKS
+        if: steps.push.outcome == 'success'
+        run: |
+          set -euo pipefail
+          sudo az aks install-cli
+          az aks get-credentials --resource-group rg-brokenbank-demo --name juice-shop --overwrite-existing
+          rendered="${RUNNER_TEMP}/juice-shop.yaml"
+          sed -e "s|\${acr_login_server}|${ACR_LOGIN}|g" -e "s|\${image_tag}|${GITHUB_SHA}|g" k8s/juice-shop.yaml > "$rendered"
+          kubectl apply -f "$rendered"
+          if ! kubectl -n juiceshop rollout status deployment/juice-shop --timeout=600s; then
+            kubectl -n juiceshop describe pods -l app=juice-shop || true
+            kubectl -n juiceshop get events --sort-by=.lastTimestamp || true
+            exit 1
+          fi
+          kubectl -n juiceshop get svc juice-shop -o wide
+
+      - name: Relock ACR firewall
+        if: always()
+        run: |
+          set -euo pipefail
+          ./infra/aks/scripts/relock-acr-firewall.sh "$ACR_NAME"
+          RUNNER_IP="${{ steps.acrnet.outputs.runner_ip }}"
+          if [[ -n "$RUNNER_IP" ]]; then
+            echo "[acr] Removing runner IP ${RUNNER_IP}"
+            az acr network-rule remove \
+              --name "$ACR_NAME" \
+              --ip-address "$RUNNER_IP" \
+              --output none || true
+          fi

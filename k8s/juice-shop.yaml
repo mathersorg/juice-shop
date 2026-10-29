@@ -1,0 +1,53 @@
+# Juice Shop on the existing AKS cluster juice-shop in rg-brokenbank-demo.
+# The cluster pulls from badbankrehzuh. Do not add an image pull secret.
+# application=juice-shop is the Cortex cloud criteria value.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: juiceshop
+  labels:
+    application: juice-shop
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: juice-shop
+  namespace: juiceshop
+  labels:
+    app: juice-shop
+    application: juice-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: juice-shop
+  template:
+    metadata:
+      labels:
+        app: juice-shop
+        application: juice-shop
+    spec:
+      containers:
+        - name: juice-shop
+          image: ${acr_login_server}/juice-shop:${image_tag}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: juice-shop
+  namespace: juiceshop
+  labels:
+    app: juice-shop
+    application: juice-shop
+spec:
+  type: LoadBalancer
+  selector:
+    app: juice-shop
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
