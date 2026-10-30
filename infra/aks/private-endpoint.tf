@@ -31,9 +31,16 @@ resource "azurerm_private_dns_zone" "acr" {
   resource_group_name = "rg-brokenbank-demo"
 
   tags = {
-    application = "juice-shop"
-    yor_name    = "acr"
-    yor_trace   = "5d47dd58-305e-4794-9698-46730c3671d7"
+    application          = "juice-shop"
+    yor_name             = "acr"
+    yor_trace            = "5d47dd58-305e-4794-9698-46730c3671d7"
+    git_commit           = "b7f733b4ba9dc51787a9da9c81b4ff77675e8171"
+    git_file             = "infra/aks/private-endpoint.tf"
+    git_last_modified_at = "2026-10-29 20:54:51"
+    git_last_modified_by = "smathers@digitalgatekeepers.com"
+    git_modifiers        = "smathers"
+    git_org              = "mathersorg"
+    git_repo             = "juice-shop"
   }
 }
 
@@ -44,8 +51,15 @@ resource "azurerm_private_dns_zone_virtual_network_link" "lab" {
   virtual_network_id    = data.azurerm_virtual_network.lab.id
   registration_enabled  = false
   tags = {
-    yor_name  = "lab"
-    yor_trace = "619952c4-12e1-4a4b-b859-0f9b3f892dbf"
+    yor_name             = "lab"
+    yor_trace            = "619952c4-12e1-4a4b-b859-0f9b3f892dbf"
+    git_commit           = "b7f733b4ba9dc51787a9da9c81b4ff77675e8171"
+    git_file             = "infra/aks/private-endpoint.tf"
+    git_last_modified_at = "2026-10-29 20:54:51"
+    git_last_modified_by = "smathers@digitalgatekeepers.com"
+    git_modifiers        = "smathers"
+    git_org              = "mathersorg"
+    git_repo             = "juice-shop"
   }
 }
 
@@ -56,8 +70,15 @@ resource "azurerm_private_dns_zone_virtual_network_link" "aks" {
   virtual_network_id    = data.azurerm_virtual_network.aks.id
   registration_enabled  = false
   tags = {
-    yor_name  = "aks"
-    yor_trace = "819e7707-19d7-4f28-aff2-3369bf281eb4"
+    yor_name             = "aks"
+    yor_trace            = "819e7707-19d7-4f28-aff2-3369bf281eb4"
+    git_commit           = "b7f733b4ba9dc51787a9da9c81b4ff77675e8171"
+    git_file             = "infra/aks/private-endpoint.tf"
+    git_last_modified_at = "2026-10-29 20:54:51"
+    git_last_modified_by = "smathers@digitalgatekeepers.com"
+    git_modifiers        = "smathers"
+    git_org              = "mathersorg"
+    git_repo             = "juice-shop"
   }
 }
 
@@ -80,9 +101,16 @@ resource "azurerm_private_endpoint" "acr" {
   }
 
   tags = {
-    application = "juice-shop"
-    yor_name    = "acr"
-    yor_trace   = "d754000b-170a-4ff6-a831-9fa65f094f5c"
+    application          = "juice-shop"
+    yor_name             = "acr"
+    yor_trace            = "d754000b-170a-4ff6-a831-9fa65f094f5c"
+    git_commit           = "b7f733b4ba9dc51787a9da9c81b4ff77675e8171"
+    git_file             = "infra/aks/private-endpoint.tf"
+    git_last_modified_at = "2026-10-29 20:54:51"
+    git_last_modified_by = "smathers@digitalgatekeepers.com"
+    git_modifiers        = "smathers"
+    git_org              = "mathersorg"
+    git_repo             = "juice-shop"
   }
 }
 
