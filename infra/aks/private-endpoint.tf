@@ -57,7 +57,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "aks" {
   tags = {
     yor_name             = "aks"
     yor_trace            = "819e7707-19d7-4f28-aff2-3369bf281eb4"
-    git_commit           = "b7f733b4ba9dc51787a9da9c81b4ff77675e8171"
+    git_commit           = "f633697d2825979a7a0d33f3513701ee2818e3f5"
     git_file             = "infra/aks/private-endpoint.tf"
     git_last_modified_at = "2026-10-29 20:54:51"
     git_last_modified_by = "smathers@digitalgatekeepers.com"
@@ -89,7 +89,7 @@ resource "azurerm_private_endpoint" "acr" {
     application          = "juice-shop"
     yor_name             = "acr"
     yor_trace            = "d754000b-170a-4ff6-a831-9fa65f094f5c"
-    git_commit           = "b7f733b4ba9dc51787a9da9c81b4ff77675e8171"
+    git_commit           = "f633697d2825979a7a0d33f3513701ee2818e3f5"
     git_file             = "infra/aks/private-endpoint.tf"
     git_last_modified_at = "2026-10-29 20:54:51"
     git_last_modified_by = "smathers@digitalgatekeepers.com"
