@@ -8,7 +8,7 @@ RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-rg-brokenbank-demo}"
 SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-2fd9cc2a-5fbe-4f3a-97e9-cf0e2f000300}"
 SUBSCRIPTION_ID="${SUBSCRIPTION_ID//[$'\t\r\n \"']/}"
 CLUSTER="${AKS_CLUSTER_NAME:-juice-shop}"
-ACR="${1:-badbankrehzuh}"
+ACR="${1:-juiceshoprehzuh}"
 
 az account set --subscription "$SUBSCRIPTION_ID"
 

@@ -20,8 +20,8 @@ env:
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ACR_NAME: badbankrehzuh
-  ACR_LOGIN: badbankrehzuh.azurecr.io
+  ACR_NAME: juiceshoprehzuh
+  ACR_LOGIN: juiceshoprehzuh.azurecr.io
 
 jobs:
   publish:

@@ -1,5 +1,5 @@
 # Juice Shop on the existing AKS cluster juice-shop in rg-brokenbank-demo.
-# The cluster pulls from badbankrehzuh. Do not add an image pull secret.
+# The cluster pulls from juiceshoprehzuh. Do not add an image pull secret.
 # application=juice-shop is the Cortex cloud criteria value.
 apiVersion: v1
 kind: Namespace
