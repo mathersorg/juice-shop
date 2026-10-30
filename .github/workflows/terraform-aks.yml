@@ -76,6 +76,7 @@ jobs:
           terraform show -json tfplan > "${RUNNER_TEMP}/plan.json"
           if jq -e '
             [.resource_changes[]?
+              | select(.type == "azurerm_kubernetes_cluster")
               | select(.change.actions | index("delete"))] | length > 0
           ' "${RUNNER_TEMP}/plan.json" >/dev/null; then
             echo "error: plan would delete or replace the cluster" >&2
