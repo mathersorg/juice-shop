@@ -17,6 +17,8 @@ resource "azurerm_container_registry" "juice" {
 
   tags = {
     application = "juice-shop"
+    yor_name    = "juice"
+    yor_trace   = "46b76e7d-37fa-48fb-9aa3-4c9d25cb22e9"
   }
 }
 
@@ -40,5 +42,7 @@ resource "azurerm_private_endpoint" "juice_acr" {
 
   tags = {
     application = "juice-shop"
+    yor_name    = "juice_acr"
+    yor_trace   = "6089ae4c-a2d4-42d3-b7be-2b76689c308e"
   }
 }
