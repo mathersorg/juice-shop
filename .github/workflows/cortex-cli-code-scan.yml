@@ -1,6 +1,7 @@
 name: Cortex CLI Code Scan
 
 on:
+  workflow_call:
   push:
     branches:
       - master

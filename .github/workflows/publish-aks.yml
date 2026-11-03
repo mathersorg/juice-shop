@@ -5,6 +5,7 @@ name: Publish Juice Shop to ACR and AKS
     branches: [master]
     paths-ignore:
       - "infra/**"
+      - ".github/workflows/publish-aks.yml"
       - ".github/workflows/terraform-aks.yml"
       - ".github/workflows/yor.yml"
       - ".github/workflows/cortex-cli-code-scan.yml"
@@ -126,3 +127,8 @@ jobs:
               --ip-address "$RUNNER_IP" \
               --output none || true
           fi
+
+  cortex-code-scan:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/cortex-cli-code-scan.yml
+    secrets: inherit
