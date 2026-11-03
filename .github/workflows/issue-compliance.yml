@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   check-compliance:
+    if: github.repository == 'juice-shop/juice-shop'
     runs-on: ubuntu-latest
     steps:
       - name: "Initialize Issue Information"
