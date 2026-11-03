@@ -43,6 +43,12 @@ jobs:
       - name: Verify Node.js Version
         run: node -v
 
+      - name: Write npm lockfile for SCA
+        run: |
+          set -euo pipefail
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          test -f package-lock.json
+
       - name: Download cortexcli
         run: |
           set -x
