@@ -9,6 +9,7 @@ name: Publish Juice Shop to ACR and AKS
       - ".github/workflows/terraform-aks.yml"
       - ".github/workflows/yor.yml"
       - ".github/workflows/cortex-cli-code-scan.yml"
+      - ".github/workflows/ci.yml"
       - "*.md"
   workflow_dispatch:
 

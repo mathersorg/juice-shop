@@ -41,6 +41,7 @@ jobs:
       - name: "Lint source code"
         run: npm run lint
   coding-challenge-rsn:
+    if: github.repository == 'juice-shop/juice-shop'
     runs-on: windows-latest
     steps:
       - name: "Check out Git repository"
@@ -59,8 +60,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [22, 24, 26]
+        os: ${{ github.repository == 'juice-shop/juice-shop' && fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
+        node-version: ${{ github.repository == 'juice-shop/juice-shop' && fromJSON('[22, 24, 26]') || fromJSON('[24]') }}
     steps:
       - name: "Check out Git repository"
         if: github.repository == 'juice-shop/juice-shop' || (github.repository != 'juice-shop/juice-shop' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24')
@@ -100,8 +101,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [22, 24, 26]
+        os: ${{ github.repository == 'juice-shop/juice-shop' && fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
+        node-version: ${{ github.repository == 'juice-shop/juice-shop' && fromJSON('[22, 24, 26]') || fromJSON('[24]') }}
     steps:
       - name: "Check out Git repository"
         if: github.repository == 'juice-shop/juice-shop' || (github.repository != 'juice-shop/juice-shop' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24')
@@ -139,8 +140,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [22, 24, 26]
+        os: ${{ github.repository == 'juice-shop/juice-shop' && fromJSON('["ubuntu-latest", "windows-latest", "macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
+        node-version: ${{ github.repository == 'juice-shop/juice-shop' && fromJSON('[22, 24, 26]') || fromJSON('[24]') }}
     steps:
       - name: "Check out Git repository"
         if: github.repository == 'juice-shop/juice-shop' || (github.repository != 'juice-shop/juice-shop' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24')
@@ -200,6 +201,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           files: frontend-lcov.info server-lcov.info api-lcov.info
   custom-config-test:
+    if: github.repository == 'juice-shop/juice-shop'
     runs-on: ubuntu-latest
     steps:
       - name: "Check out Git repository"
@@ -231,6 +233,7 @@ jobs:
             NODE_ENV=tutorial npm run test:server &&
             NODE_ENV=unsafe npm run test:server
   e2e-test:
+    if: github.repository == 'juice-shop/juice-shop'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
