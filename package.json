@@ -157,6 +157,7 @@
     "semver": "^7.6.3",
     "sequelize": "^6.37.3",
     "serve-index": "^1.9.1",
+    "shell-quote": "1.7.2",
     "socket.io": "^4.8.4",
     "sqlite3": "^5.1.7",
     "svg-captcha": "^1.4.0",

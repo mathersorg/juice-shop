@@ -1,0 +1,8 @@
+{
+  "name": "cortex-demo",
+  "private": true,
+  "description": "Pinned dependency so the Cortex pull request scan can read a committed lockfile.",
+  "dependencies": {
+    "shell-quote": "1.7.2"
+  }
+}
