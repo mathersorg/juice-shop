@@ -1,9 +1,8 @@
 name: "CI/CD Pipeline"
 on:
   push:
-    branches-ignore:
-      - l10n_develop
-      - gh-pages
+    branches:
+      - master
     paths-ignore:
       - '*.md'
       - 'LICENSE'
@@ -11,12 +10,6 @@ on:
       - 'screenshots/**'
     tags-ignore:
       - '*'
-  pull_request:
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - 'data/static/i18n/*.json'
-      - 'frontend/src/assets/i18n/*.json'
 env:
   NODE_DEFAULT_VERSION: 24
   NPM_VERSION: 11.19.1
