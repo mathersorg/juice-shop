@@ -3,6 +3,10 @@
   "private": true,
   "description": "Pinned dependency so the Cortex pull request scan can read a committed lockfile.",
   "dependencies": {
+    "ajv": "6.12.2",
+    "glob-parent": "5.1.1",
+    "json5": "2.2.1",
+    "kind-of": "6.0.2",
     "shell-quote": "1.7.2"
   }
 }
